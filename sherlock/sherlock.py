@@ -18,6 +18,7 @@ from time import monotonic
 from concurrent.futures import ThreadPoolExecutor
 from time import time
 import webbrowser
+import psutil
 
 import requests
 
@@ -176,10 +177,12 @@ def sherlock(username, site_data, query_notify,
         underlying_session = requests.session()
         underlying_request = requests.Request()
 
-    #Limit number of workers to 20.
-    #This is probably vastly overkill.
-    if len(site_data) >= 20:
-        max_workers=20
+    #Limit number of workers to same as number of CPU.
+    #Found on StackOverflow https://stackoverflow.com/questions/1006289/how-to-find-out-the-number-of-cpus-using-python
+    no_cpus = psutil.cpu_count(logical = True)
+    if len(site_data) >= no_cpus:
+        # this will make sure number of worker will be same as logical CPU, so prevent overload/timeouts
+        max_workers = no_cpus
     else:
         max_workers=len(site_data)
 
@@ -498,7 +501,6 @@ def main():
     parser.add_argument("--browse", "-b",
                         action="store_true", dest="browse", default=False,
                         help="Browse to all results on default bowser.")
-
     args = parser.parse_args()
 
 
